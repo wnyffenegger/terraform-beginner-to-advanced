@@ -45,3 +45,63 @@ current state of the deployment
 * Conditional expressions
     * if statement does occur in terraform but is contrived
     * `count = var.istest == false ? 1 : 0`
+
+
+* Local Values
+    * Scoped to a single tform module
+    * Referred to like vars `local.common_tags`
+
+* Terraform Built In Functions
+    * Standardized functions for common use cases
+    * Only built in functions are supported, no user defined functions
+    * List of functions https://www.terraform.io/docs/language/functions/index.html 
+    * ** Use the `terraform console` to test out functions
+    * Functions are organized by the type of entity they act on (String, Numeric, Collection, File)
+    * `lookup` acts on a map so the documentation is found in the Collection group
+
+* Terraform Datasources
+    * Allow you to specify where to pull information from
+    * Parameterize based on regions, os, etc. an allow values
+    to be computed during terraform plan/apply rather than hard coded
+    * Organizations can configure custom data sources to pull resources from
+
+* Debugging Terraform
+    * **TF_LOG** and **TF_LOG_PATH** set logging level and where to log.
+    * Example: 
+    ```bash
+        export TF_LOG_PATH=/tmp/crash.log
+        export TF_LOG=TRACE
+    ```
+
+* Terraform Format
+    * Automatically format to Terraform standards
+    * `terraform fmt` will auto format to correct indentation
+
+* File load order
+    * 
+
+* Dynamic Blocks
+    * Dynamic block allows creating a for loop for specifiying coimponents of resources
+    * Instead of enumerating every value in a list individually use the dynamic block to iterate over the list implicitly
+    * Requires the use of some form of list or map to help specify the structure and values in the loop
+    * Example:
+    ```
+      dynamic "ingress" {
+        # List to iterate over  
+        for_each = var.sg_ports
+        # Specify variable name for item in list
+        iterator = port
+        content {
+            from_port   = port.value
+            to_port     = port.value
+            protocol    = "tcp"
+            cidr_blocks = ["0.0.0.0/0"]
+        }
+      }
+    ```
+
+Tainting Resources
+    * You can mark resources as tainted to force terraform to mark a resource as modified and schedule to be deleted on next plan/apply
+    * Usage: `terraform taint <resource-to-delete>
+    * Tainting a resource only marks in the terraform state file, changes are done on the next apply.
+    * Tainting can effect dependencies of a resource as well but might not be automatically caught.
