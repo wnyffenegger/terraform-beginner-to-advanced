@@ -6,7 +6,7 @@
 * [ ] Credentials temporarily placed in `.aws` folder. Delete on course completion.
 
 
-## Section 1
+## Section 1 Basic Operations
 
 * terraform refresh will update for current state
 * terraform plan attempts to make current state match desired state
@@ -17,11 +17,15 @@
 current state of the deployment
 
 
-## Section 2
+## Section 2 Basic Features
 
-* All arguments are attributes, and some things that aren't arguments are attributes
-* All attributes can become outputs
-* Attributes can be re-used within a file like a variable (example is an ip address)
+
+* Terraform Output
+    * All arguments are attributes, and some things that aren't arguments are attributes
+    * All attributes can become outputs
+    * Attributes can be re-used within a file like a variable (example is an ip address)
+    * To get the value of an output in the terraform.tfstate file run
+        `terraform output <variable>`
 
 * Variables are all prefixed with `var.var_name` when referenced in other locationster
 * Variables can be passed in multiple ways
@@ -105,3 +109,43 @@ Tainting Resources
     * Usage: `terraform taint <resource-to-delete>
     * Tainting a resource only marks in the terraform state file, changes are done on the next apply.
     * Tainting can effect dependencies of a resource as well but might not be automatically caught.
+
+
+Splat Expressions
+    * Splat expressions are essentially regular expressions that work a lot like unix expressions
+    * Example: `aws_iam_user.lb[*].arn` which matches all iam users starting with lb
+
+GraphViz Support
+    * Terraform represents rendering its internal DAG as a graph viz graph
+
+Terraform Settings
+    * `required_version` set a minimum version of terraform
+    * `required_providers` list of required hashicorp providers
+
+
+## Section 3 Providers
+
+Provisionsers:
+    * Need to configure machines beyond an install
+    * Provisioners are the mechanism for triggering that
+    * `local-exec` provisioners execute on our machine
+        * Running Ansible, Puppet, Chef, etc. from your deployment machine
+    * `remote-exec` provisioners
+        * Invoke on the remote resource
+    * List of types of provisioners available:
+        * Chef
+        * Salt
+        * etc.
+
+Creation vs. Destroy Time Provisioners
+    * Creation only run during initial resource standup only
+        * If it fails a resource is marked as "tainted" and the next apply will destroy the resource and recreate it.
+    * Destroy only when a resource is deleted by terraform
+    * Default type of a provisioner is creation
+    * Specify destroy by adding `when = destroy` to the provisioner declaration.
+
+Failure Behavior
+    * By default a failure in a provisioner fails `terraform apply`
+    * The `on_failure` setting can be used to change the default behavior
+        * `continue` - ignore error and proceed
+        * `fail` - raise an error and stop apply (default)
