@@ -105,47 +105,78 @@ current state of the deployment
     ```
 
 Tainting Resources
-    * You can mark resources as tainted to force terraform to mark a resource as modified and schedule to be deleted on next plan/apply
-    * Usage: `terraform taint <resource-to-delete>
-    * Tainting a resource only marks in the terraform state file, changes are done on the next apply.
-    * Tainting can effect dependencies of a resource as well but might not be automatically caught.
+* You can mark resources as tainted to force terraform to mark a resource as modified and schedule to be deleted on next plan/apply
+* Usage: `terraform taint <resource-to-delete>
+* Tainting a resource only marks in the terraform state file, changes are done on the next apply.
+* Tainting can effect dependencies of a resource as well but might not be automatically caught.
 
 
 Splat Expressions
-    * Splat expressions are essentially regular expressions that work a lot like unix expressions
-    * Example: `aws_iam_user.lb[*].arn` which matches all iam users starting with lb
+* Splat expressions are essentially regular expressions that work a lot like unix expressions
+* Example: `aws_iam_user.lb[*].arn` which matches all iam users starting with lb
 
 GraphViz Support
-    * Terraform represents rendering its internal DAG as a graph viz graph
+* Terraform represents rendering its internal DAG as a graph viz graph
 
 Terraform Settings
-    * `required_version` set a minimum version of terraform
-    * `required_providers` list of required hashicorp providers
+* `required_version` set a minimum version of terraform
+* `required_providers` list of required hashicorp providers
 
 
 ## Section 3 Providers
 
 Provisionsers:
-    * Need to configure machines beyond an install
-    * Provisioners are the mechanism for triggering that
-    * `local-exec` provisioners execute on our machine
-        * Running Ansible, Puppet, Chef, etc. from your deployment machine
-    * `remote-exec` provisioners
-        * Invoke on the remote resource
-    * List of types of provisioners available:
-        * Chef
-        * Salt
-        * etc.
+* Need to configure machines beyond an install
+* Provisioners are the mechanism for triggering that
+* `local-exec` provisioners execute on our machine
+    * Running Ansible, Puppet, Chef, etc. from your deployment machine
+* `remote-exec` provisioners
+    * Invoke on the remote resource
+* List of types of provisioners available:
+    * Chef
+    * Salt
+    * etc.
 
 Creation vs. Destroy Time Provisioners
-    * Creation only run during initial resource standup only
-        * If it fails a resource is marked as "tainted" and the next apply will destroy the resource and recreate it.
-    * Destroy only when a resource is deleted by terraform
-    * Default type of a provisioner is creation
-    * Specify destroy by adding `when = destroy` to the provisioner declaration.
+* Creation only run during initial resource standup only
+    * If it fails a resource is marked as "tainted" and the next apply will destroy the resource and recreate it.
+* Destroy only when a resource is deleted by terraform
+* Default type of a provisioner is creation
+* Specify destroy by adding `when = destroy` to the provisioner declaration.
 
 Failure Behavior
-    * By default a failure in a provisioner fails `terraform apply`
-    * The `on_failure` setting can be used to change the default behavior
-        * `continue` - ignore error and proceed
-        * `fail` - raise an error and stop apply (default)
+* By default a failure in a provisioner fails `terraform apply`
+* The `on_failure` setting can be used to change the default behavior
+    * `continue` - ignore error and proceed
+    * `fail` - raise an error and stop apply (default)
+
+# Section 4 Modules & Workspaces
+
+Modules are your composable components of a deployment.
+    
+* A module specifies a resource to be created and can be re-used within multiple scenarios
+* Modules are imported using their relative path ex. `../../modules/ec2`
+* Modules support all of the functionality of normal terraform including variables
+* Variables often contain defaults
+* Overriding defaults example:
+    ```
+    module "ec2module" {
+        source = "../../modules/ec2"
+        instance_type = "t2.large"
+    }
+    ```
+
+Terraform Registry
+* Community maintained resource containing modules written by the community
+* Verified modules are restricted to a small number of trusted HashiCorp partners.
+Any verified module should be trusted.
+* Documented in the same way that resources are
+* Verified modules can be referenced by name to be retrieved during `terraform init`
+* Downloaded modules are stored in `.terraform/modules`. The full module source is downloaded.
+
+Terraform Workspace
+* Scope that modules, vars, etc. are valid for
+* Use multiple workspaces with different sets of environment variables
+    * Staging -> t2.micro for dev machines
+    * Production -> m4.large
+* You can switch workspaces on the command line `terraform workspace help` for list of commands
