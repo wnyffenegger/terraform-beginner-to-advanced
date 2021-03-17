@@ -180,3 +180,104 @@ Terraform Workspace
     * Staging -> t2.micro for dev machines
     * Production -> m4.large
 * You can switch workspaces on the command line `terraform workspace help` for list of commands
+
+Workspace Implementation
+* `terraform show` list of workspaces
+* `terraform workspace new <env>` creates new workspace
+* Use `lookup` function with maps in code to change variables based on environment
+* State is saved in a directory `terraform.tfstate.d` for all other workspaces besides `default`
+
+# Section 5 Remote State Management
+
+The one weakness of Terraform is the tfstate. When multiple people need to keep
+tfstate in sync there needs to be a centralized management source for both the
+code and the tfstate.
+
+* tfstate saves secrets in cleartext
+* tfstate must not be committed to git
+
+Terraform Gitignore
+* Check gitignore repository on GitHub
+* There is a list of files to ignore for Terraform
+* Not complete but a good start
+
+## Modules can pull from git
+```
+module "vpc" {
+    source = "git:https://github.com/acme/acme.git"
+}
+```
+
+* You can pull via a variety of methods: https://www.terraform.io/docs/language/modules/sources.html
+    * LocalPaths
+    * Terraform Registry
+    * GitHub, Bitbucket, S3, etc.
+* You can check out from git several different ways
+    * Via https
+    * Via ssh
+    * You can checkout specific branches as well
+
+
+## Remote Back End
+
+* Allows you to store tfstate in a remote backend separate from a central repository
+* The tfstate never persists locally, it has to be pushed or pulled from that remote backend
+
+* Supported backend types:
+    * Standard: state storage and locking
+    * Enhanced: standard + remote management
+
+* Available backends: https://www.terraform.io/docs/language/settings/backends
+
+
+### Implementing S3 Backend
+
+* Create S3 Bucket
+* Specify as part of Terraform configuration
+* No local state file should be created
+
+### Remote State File Locking
+
+* When multiple people are working on the same infra you need terraform locking
+* **Not all backend providers support locking**
+* S3 does not support locking by default
+* Need to add `dynamodb_table` to backend specification
+* Locking creates row in dynamodb that is deleted after actions are completed
+
+
+## Terraform State Management
+
+* If you ever need to manually modify the Terraform state use `terraform state`
+* Docs: https://www.terraform.io/docs/cli/commands/state/index.html
+* Allows you to list and modify existing state resources
+* Backs up state file after every command
+
+* `terraform state list` list remote state
+* `terraform state pull` pull remote state
+* `terraform state push` use to replace a corrupted state
+* `rm` remove items from state, those items are not destroyed but no longer managed by Terraform
+* `terraform state show` show attributes of a single resource
+
+
+## Terraform Import
+
+When a change is made manually in AWS you need some way to get it into IaC.
+
+`terraform import` will pull configuration of a resource down to you but you 
+still have to write out the configuration yourself.
+
+
+# Section 6 - Security Primer
+
+AWS CLI
+
+* You can load credentials at runtime as environment arguments to keep
+them out of source code.
+
+
+Multiple Providers
+
+* In Terraform you can alias providers and start resources in different accounts/regions
+* Add an `alias` to your provider specification to have multiple configurations of
+a single provider
+* 
